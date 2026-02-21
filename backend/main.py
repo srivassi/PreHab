@@ -1,14 +1,21 @@
 import os
+import traceback
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()  # Load .env BEFORE importing services
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from routers import analyze, training, cycle, users, escalation, wearable
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 print(f"[DEBUG] CRUSOE_API_KEY loaded: {bool(os.getenv('CRUSOE_API_KEY'))}")
 print(f"[DEBUG] PAID_API_KEY loaded: {bool(os.getenv('PAID_API_KEY'))}")
+print(f"[DEBUG] QWEN_MODEL: {os.getenv('QWEN_MODEL')}")
 
 app = FastAPI(
     title="PreHab API",
@@ -23,6 +30,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    full_traceback = traceback.format_exc()
+    logger.error("UNHANDLED EXCEPTION\nURL: %s\nMethod: %s\n%s",
+                 request.url, request.method, full_traceback)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "type": type(exc).__name__}
+    )
 
 app.include_router(users.router,      prefix="/users",      tags=["users"])
 app.include_router(training.router,   prefix="/training",   tags=["training"])
