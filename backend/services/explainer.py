@@ -3,8 +3,8 @@ import json
 import openai
 
 CRUSOE_API_KEY  = os.getenv("CRUSOE_API_KEY", "")
-CRUSOE_BASE_URL = "https://api.crusoe.ai/v1"
-QWEN_MODEL      = os.getenv("QWEN_MODEL", "qwen3-235b-a22b-instruct-2507")  # update with exact Crusoe model string
+CRUSOE_BASE_URL = "https://hackeurope.crusoecloud.com/v1"
+QWEN_MODEL      = os.getenv("QWEN_MODEL", "NVFP4/Qwen3-235B-A22B-Instruct-2507-FP4")  # Crusoe model ID
 
 
 def generate(analysis: dict) -> str:

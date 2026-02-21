@@ -15,6 +15,10 @@ class AthleteInput(BaseModel):
     days_since_last_rest:  int
     last_7_days_soreness:  List[int]    # for trend detection
     last_7_days_load:      List[float]  # for trend detection
+    # ── INJURY HISTORY ──────────────────
+    previous_injuries:     Optional[List[str]] = None  # e.g. ["ACL", "hamstring", "groin"]
+    total_injuries_past_year: Optional[int] = 0  # count of injuries in last 12 months
+    days_since_last_injury:   Optional[int] = None  # days since most recent injury
 
 class TrainingLogCreate(BaseModel):
     athlete_id:    str

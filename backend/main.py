@@ -1,6 +1,14 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Load .env BEFORE importing services
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import analyze, training, cycle, users, escalation, wearable
+
+print(f"[DEBUG] CRUSOE_API_KEY loaded: {bool(os.getenv('CRUSOE_API_KEY'))}")
+print(f"[DEBUG] PAID_API_KEY loaded: {bool(os.getenv('PAID_API_KEY'))}")
 
 app = FastAPI(
     title="PreHab API",
@@ -19,7 +27,7 @@ app.add_middleware(
 app.include_router(users.router,      prefix="/users",      tags=["users"])
 app.include_router(training.router,   prefix="/training",   tags=["training"])
 app.include_router(cycle.router,      prefix="/cycle",      tags=["cycle"])
-app.include_router(analyze.router,    prefix="/analyze",    tags=["analyze"])
+app.include_router(analyze.router,    prefix="/analyse",    tags=["analyse"])
 app.include_router(escalation.router, prefix="/escalation", tags=["escalation"])
 app.include_router(wearable.router,   prefix="/wearable",   tags=["wearable"])
 

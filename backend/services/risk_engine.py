@@ -1,5 +1,6 @@
 import joblib
 import os
+import pandas as pd
 from schemas import AthleteInput
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "../ml/models")
@@ -13,6 +14,8 @@ FACTOR_LABELS = {
     "session_rpe":           "High perceived exertion",
     "weekly_load":           "High weekly training volume",
     "days_since_last_rest":  "Insufficient rest days",
+    "injury_recurrence_risk": "History of previous injuries",
+    "recent_injury":         "Recent injury (incomplete recovery)",
 }
 
 FORECAST_TABLE = {
@@ -42,25 +45,50 @@ def _load_models():
         return None
 
 
+def _injury_history_multiplier(data: AthleteInput) -> float:
+    """Calculate risk multiplier based on injury history. Returns 1.0-1.5x."""
+    multiplier = 1.0
+    
+    # Recent injury significantly increases risk (incomplete recovery)
+    if data.days_since_last_injury is not None:
+        if data.days_since_last_injury < 30:  # Within last month
+            multiplier += 0.30
+        elif data.days_since_last_injury < 90:  # Within last 3 months
+            multiplier += 0.15
+    
+    # History of multiple injuries increases re-injury risk
+    if data.total_injuries_past_year is not None:
+        multiplier += min(0.15, data.total_injuries_past_year * 0.05)  # +5% per injury, cap at +15%
+    
+    return min(multiplier, 1.5)  # Cap at 1.5x
+
+
 def _dummy_scores(data: AthleteInput):
     """Rule-based fallback if .pkl files don't exist yet."""
-    acl = min(0.9, 0.1
+    injury_mult = _injury_history_multiplier(data)
+    
+    acl = min(0.9, (0.1
         + 0.35 * (data.cycle_phase == 2)
         + 0.30 * max(0, data.acute_chronic_ratio - 1.3)
-        + 0.05 * (data.knee_soreness / 10))
-    soft = min(0.9, 0.1
+        + 0.05 * (data.knee_soreness / 10)) * injury_mult)
+    soft = min(0.9, (0.1
         + 0.25 * (data.acute_chronic_ratio > 1.5)
         + 0.05 * (data.hamstring_soreness / 10)
-        + 0.05 * (data.groin_soreness / 10))
-    ot = min(0.9, 0.1
+        + 0.05 * (data.groin_soreness / 10)) * injury_mult)
+    ot = min(0.9, (0.1
         + 0.20 * (data.days_since_last_rest > 5)
         + 0.20 * (data.session_rpe > 8)
-        + 0.10 * (data.weekly_load > 300))
+        + 0.10 * (data.weekly_load > 300)) * injury_mult)
     return acl, soft, ot, None
 
 
 def _feature_vector(data: AthleteInput):
-    return [[
+    """Return features as DataFrame with proper column names to avoid sklearn warnings."""
+    feature_names = [
+        "acute_chronic_ratio", "cycle_phase", "knee_soreness",
+        "hamstring_soreness", "session_rpe", "days_since_last_rest", "weekly_load"
+    ]
+    return pd.DataFrame([[
         data.acute_chronic_ratio,
         data.cycle_phase,
         data.knee_soreness,
@@ -68,7 +96,7 @@ def _feature_vector(data: AthleteInput):
         data.session_rpe,
         data.days_since_last_rest,
         data.weekly_load,
-    ]]
+    ]], columns=feature_names)
 
 
 def _composite_risk(acl, soft, ot) -> str:
@@ -103,7 +131,8 @@ def _detect_cycle_risk_window(phase, acr) -> str:
     return "safe"
 
 
-def _get_contributing_factors(rf_model, X, features):
+def _get_contributing_factors(rf_model, X, data: AthleteInput):
+    """Return top 3 contributing factors including injury history if present."""
     feature_names = [
         "acute_chronic_ratio", "cycle_phase", "knee_soreness",
         "hamstring_soreness", "session_rpe", "days_since_last_rest", "weekly_load"
@@ -114,7 +143,18 @@ def _get_contributing_factors(rf_model, X, features):
         # Dummy importances if no model yet
         importances = [0.30, 0.25, 0.15, 0.12, 0.08, 0.06, 0.04]
 
-    ranked = sorted(zip(feature_names, importances), key=lambda x: -x[1])
+    factors = list(zip(feature_names, importances))
+    
+    # Add injury history factors if applicable
+    injury_mult = _injury_history_multiplier(data)
+    if injury_mult > 1.0:  # Only add if injury history actually increases risk
+        injury_impact = (injury_mult - 1.0) * 0.30  # Scale to reasonable contribution
+        if data.days_since_last_injury is not None and data.days_since_last_injury < 90:
+            factors.append(("recent_injury", min(injury_impact, 0.15)))
+        if data.total_injuries_past_year is not None and data.total_injuries_past_year > 0:
+            factors.append(("injury_recurrence_risk", min(injury_impact * 0.7, 0.10)))
+    
+    ranked = sorted(factors, key=lambda x: -x[1])
     return [
         {"factor": f, "contribution": round(float(i), 2), "label": FACTOR_LABELS.get(f, f)}
         for f, i in ranked[:3]
@@ -140,7 +180,7 @@ def _forecast(risk, load_traj, phase):
 def run(data: AthleteInput) -> dict:
     """Main entry point. Returns the full analysis dict."""
     models = _load_models()
-    features = _feature_vector(data)
+    features = _feature_vector(data)  # Returns DataFrame with feature names
 
     if models:
         acl  = float(models["acl"].predict_proba(features)[0][1])
@@ -154,7 +194,7 @@ def run(data: AthleteInput) -> dict:
     load_traj     = _detect_load_trajectory(data.last_7_days_load)
     soreness_traj = _detect_soreness_trajectory(data.last_7_days_soreness)
     cycle_window  = _detect_cycle_risk_window(data.cycle_phase, data.acute_chronic_ratio)
-    factors       = _get_contributing_factors(rf, features[0], None)
+    factors       = _get_contributing_factors(rf, features.values[0], data)
     forecast      = _forecast(risk, load_traj, data.cycle_phase)
 
     return {

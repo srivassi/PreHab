@@ -8,6 +8,7 @@ def record_signal(event_name: str, athlete_id: str, risk_level: str, plan_adjust
     """
     Record an agent signal to Paid.ai.
     Silently skips if PAID_API_KEY is not set (e.g. during local dev).
+    Also skips gracefully if paid-python is not installed.
     """
     if not PAID_API_KEY:
         print(f"[Paid.ai] PAID_API_KEY not set — skipping signal: {event_name}")
@@ -15,12 +16,17 @@ def record_signal(event_name: str, athlete_id: str, risk_level: str, plan_adjust
 
     try:
         from paid import Paid, Signal  # pip install paid-python
+        from paid.models import CustomerByExternalId
+    except ImportError:
+        print(f"[Paid.ai] paid-python not installed — skipping signal: {event_name}")
+        return
 
+    try:
         client = Paid(token=PAID_API_KEY)
         signal = Signal(
             event_name=event_name,
             agent_id=AGENT_ID,
-            customer_id=athlete_id,
+            customer=CustomerByExternalId(external_id=athlete_id),
             data={
                 "risk_level":    risk_level,
                 "plan_adjusted": plan_adjusted,
