@@ -1,0 +1,5 @@
+# .pkl files go here after running ml/train.py
+# acl_model.pkl
+# soft_model.pkl
+# ot_model.pkl
+# rf_importance.pkl
