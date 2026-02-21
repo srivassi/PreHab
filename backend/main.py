@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import analyze, training, cycle, users, escalation
+from routers import analyze, training, cycle, users, escalation, wearable
 
 app = FastAPI(
     title="PreHab API",
@@ -21,6 +21,7 @@ app.include_router(training.router,   prefix="/training",   tags=["training"])
 app.include_router(cycle.router,      prefix="/cycle",      tags=["cycle"])
 app.include_router(analyze.router,    prefix="/analyze",    tags=["analyze"])
 app.include_router(escalation.router, prefix="/escalation", tags=["escalation"])
+app.include_router(wearable.router,   prefix="/wearable",   tags=["wearable"])
 
 @app.get("/health")
 def health():
