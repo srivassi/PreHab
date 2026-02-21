@@ -7,7 +7,20 @@ WORKDIR /app
 # Copy requirements
 COPY requirements.txt .
 
-# Install dependencies
+# Install system build deps required for packages like numpy
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+	   build-essential \
+	   gcc \
+	   gfortran \
+	   python3-dev \
+	   libopenblas-dev \
+	   liblapack-dev \
+	   pkg-config \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install Python deps
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app
