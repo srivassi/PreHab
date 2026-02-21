@@ -5,6 +5,9 @@ Generates 3000 synthetic female athlete training sessions calibrated to real
 dataset distributions, using literature-derived risk multipliers loaded from
 backend/training_data/thresholds_data.json.
 
+All feature distributions are drawn from the cleaned datasets in
+backend/training_data/cleaned/ — not the raw originals.
+
 Output columns
 --------------
   acute_chronic_ratio    : float  – ACWR (acute 7-day / chronic 28-day load)
@@ -22,7 +25,7 @@ Output columns
 
 Multipliers applied
 -------------------
-  Source: thresholds_data.json (all values loaded at runtime – no hard-coding)
+  Source: thresholds_data.json (all values loaded at runtime — no hard-coding)
 
   ACL risk:
     × 1.61  when cycle_phase_encoded == 2 (Ovulatory)   [Wojtys et al. 1998]
@@ -46,16 +49,20 @@ from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 BASE            = Path(__file__).resolve().parents[1]   # backend/
+CLEANED         = BASE / "training_data" / "cleaned"
 THRESHOLDS_PATH = BASE / "training_data" / "thresholds_data.json"
-MULTIMODAL_PATH = BASE / "training_data" / "multimodal_sports_injury" / "multimodal_sports_injury_dataset.csv"
-PERIOD_LOG_PATH = BASE / "training_data" / "menstrual_data_1" / "Period_Log.csv"
-USER_PROFILE_PATH = BASE / "training_data" / "menstrual_data_1" / "User_Profile.csv"
-OUTPUT_PATH     = BASE / "training_data" / "synthetic_training_data.csv"
+
+# Cleaned source files — female filter already applied to multimodal by clean_raw_data.py
+MULTIMODAL_PATH   = CLEANED / "cleaned_multimodal_sports_injury_dataset.csv"
+PERIOD_LOG_PATH   = CLEANED / "cleaned_Period_Log.csv"
+USER_PROFILE_PATH = CLEANED / "cleaned_User_Profile.csv"
+
+OUTPUT_PATH = BASE / "training_data" / "synthetic_training_data.csv"
 
 N_ROWS = 3_000
 RNG    = np.random.default_rng(42)
 
-# ── 1. Load thresholds_data.json and extract multipliers ───────────────────────
+# ── 1. Load thresholds_data.json and extract multipliers ──────────────────────
 with open(THRESHOLDS_PATH) as f:
     thresholds = json.load(f)
 
@@ -65,25 +72,25 @@ _mul_lookup = {
     for factor in thresholds["risk_factors"]
 }
 
-BASE_INJURY_RATE: float = thresholds["base_injury_rate"]["value"] / 100  # 6.58 → 0.0658
+BASE_INJURY_RATE = thresholds["base_injury_rate"]["value"] / 100  # 6.58 → 0.0658
 
 # Named multipliers extracted from JSON
-ACL_OVULATORY_MUL: float = _mul_lookup[
+ACL_OVULATORY_MUL = _mul_lookup[
     "Menstrual Cycle Phase: Ovulatory (ACL Injury)"
 ]  # 1.61 — Wojtys et al. 1998
 
-SOFT_TISSUE_PREMENSTRUAL_MUL: float = _mul_lookup[
+SOFT_TISSUE_PREMENSTRUAL_MUL = _mul_lookup[
     "Menstrual Cycle Phase: Premenstrual/Late Luteal (Phase 4) for Muscle Injuries"
 ]  # 6.07 — Barlow et al. 2024
 
-OC_ACL_MUL: float = _mul_lookup[
+OC_ACL_MUL = _mul_lookup[
     "Hormonal Contraceptive (OC) Use (ACL Injury)"
 ]  # 0.82 — Herzberg et al. 2017
 
 # NOTE: The JSON entry for ACWR > 1.5 has value=0.0 (no female-specific evidence
 # was found). We apply 2.1 as a general population approximation. This must NOT
 # be presented as female-specific in any downstream analysis or citation.
-ACWR_HIGH_MUL: float = 2.1  # general population only
+ACWR_HIGH_MUL = 2.1  # general population only
 
 print("=" * 60)
 print("Multipliers loaded from thresholds_data.json")
@@ -95,25 +102,29 @@ print(f"  ACL × oral contraceptive use:  {OC_ACL_MUL}")
 print(f"  All injuries × ACWR > 1.5:     {ACWR_HIGH_MUL}  ← general pop. only")
 print()
 
-# ── 2. Extract real distributions (female athletes only) ──────────────────────
+# ── 2. Extract real distributions from cleaned datasets ───────────────────────
+# Track provenance of each distribution for the summary report
+_sources = {}
 
-## 2a. Multimodal dataset — session RPE, training load, fatigue (female only)
-multi         = pd.read_csv(MULTIMODAL_PATH)
-female_multi  = multi[multi["gender"] == "Female"].copy()
+## 2a. Cleaned multimodal — already filtered to female athletes only
+multimodal = pd.read_csv(MULTIMODAL_PATH)
 
-rpe_mean  = float(female_multi["training_intensity"].mean())
-rpe_std   = float(female_multi["training_intensity"].std())
-load_mean = float(female_multi["training_load"].mean())
-load_std  = float(female_multi["training_load"].std())
+rpe_mean  = float(multimodal["training_intensity"].mean())
+rpe_std   = float(multimodal["training_intensity"].std())
+load_mean = float(multimodal["training_load"].mean())
+load_std  = float(multimodal["training_load"].std())
+
+_sources["session_rpe"]   = f"cleaned_multimodal_sports_injury_dataset.csv  (n={len(multimodal):,}, training_intensity)"
+_sources["weekly_load"]   = f"cleaned_multimodal_sports_injury_dataset.csv  (n={len(multimodal):,}, training_load)"
 
 print("=" * 60)
-print(f"Real female distributions  (multimodal, n={len(female_multi):,})")
+print(f"session_rpe / weekly_load  (cleaned multimodal, female-only, n={len(multimodal):,})")
 print("=" * 60)
-print(f"  session_rpe  (training_intensity): mean={rpe_mean:.2f}, std={rpe_std:.2f}")
-print(f"  weekly_load  (training_load):      mean={load_mean:.2f}, std={load_std:.2f}")
+print(f"  session_rpe  ← training_intensity: mean={rpe_mean:.2f}, std={rpe_std:.2f}")
+print(f"  weekly_load  ← training_load:      mean={load_mean:.2f}, std={load_std:.2f}")
 print()
 
-## 2b. Period Log — cycle phase proportions
+## 2b. Cleaned Period Log — cycle phase proportions
 period_log   = pd.read_csv(PERIOD_LOG_PATH)
 phase_counts = period_log["cycle_phase"].value_counts()
 total        = phase_counts.sum()
@@ -133,26 +144,37 @@ phase_probs = np.array([
 ])
 phase_probs /= phase_probs.sum()  # normalise to guard against float drift
 
+_sources["cycle_phase_encoded"] = f"cleaned_Period_Log.csv  (n={len(period_log):,}, cycle_phase column; Follicular split 50/50 into phases 1+2)"
+
 print("=" * 60)
-print(f"Cycle phase distribution  (Period_Log, n={len(period_log):,})")
+print(f"cycle_phase_encoded  (cleaned Period_Log, n={len(period_log):,})")
 print("=" * 60)
 for i, label in enumerate(["Menstrual", "Follicular", "Ovulatory", "Luteal/Premenstrual"]):
     print(f"  Phase {i} ({label:20s}): {phase_probs[i] * 100:.1f}%")
 print()
 
-## 2c. User Profile — oral contraceptive prevalence
+## 2c. Cleaned User Profile — oral contraceptive prevalence
 user_profile = pd.read_csv(USER_PROFILE_PATH)
 oc_rate      = float(user_profile["birth_control_use"].mean())
 
+_sources["oral_contraceptive_use"] = f"cleaned_User_Profile.csv  (n={len(user_profile):,}, birth_control_use column)"
+
 print("=" * 60)
-print(f"Oral contraceptive use  (User_Profile, n={len(user_profile):,})")
+print(f"oral_contraceptive_use  (cleaned User_Profile, n={len(user_profile):,})")
 print("=" * 60)
 print(f"  Prevalence: {oc_rate * 100:.1f}%")
 print()
 
+# Columns not directly tied to a cleaned dataset column
+_sources["acute_chronic_ratio"]  = "Synthetic — log-normal(μ=0, σ=0.28), clipped [0.3, 2.5]; calibrated to ~18% sessions above 1.5 (field sport literature)"
+_sources["days_since_last_rest"] = "Synthetic — exponential(scale=3)+1, clipped [1, 14]"
+_sources["knee_soreness"]        = "Synthetic — linear function of acute_chronic_ratio + session_rpe + noise"
+_sources["hamstring_soreness"]   = "Synthetic — linear function of acute_chronic_ratio + session_rpe + noise"
+_sources["groin_soreness"]       = "Synthetic — linear function of acute_chronic_ratio + session_rpe + noise (0.7× scale)"
+
 # ── 3. Generate synthetic input features ──────────────────────────────────────
 
-## 3a. Cycle phase
+## 3a. Cycle phase (0–3)
 cycle_phase_encoded = RNG.choice([0, 1, 2, 3], size=N_ROWS, p=phase_probs)
 
 ## 3b. Oral contraceptive use
@@ -164,12 +186,12 @@ oral_contraceptive_use = RNG.binomial(1, oc_rate, size=N_ROWS)
 acwr_raw            = RNG.lognormal(mean=0.0, sigma=0.28, size=N_ROWS)
 acute_chronic_ratio = np.clip(acwr_raw, 0.30, 2.50).round(3)
 
-## 3d. Session RPE — sampled from female multimodal distribution, clipped 1–10
+## 3d. Session RPE — sampled from cleaned female multimodal distribution, clipped 1–10
 session_rpe = np.clip(
     RNG.normal(rpe_mean, rpe_std, size=N_ROWS), 1.0, 10.0
 ).round(1)
 
-## 3e. Weekly load — sampled from female multimodal distribution, clipped > 0
+## 3e. Weekly load — sampled from cleaned female multimodal distribution
 weekly_load = np.clip(
     RNG.normal(load_mean, load_std, size=N_ROWS), 50.0, 2_000.0
 ).round(1)
@@ -196,9 +218,9 @@ groin_soreness     = np.clip(_soreness_base * 0.7 + RNG.normal(0, 0.8, N_ROWS), 
 #
 # Strategy: apportion the base injury rate across three injury types according
 # to proportions consistent with football/field sport injury epidemiology:
-#   ACL injuries        ≈ 20% of all injuries
-#   Soft tissue injuries≈ 40% (muscle strains + ligament sprains, excl. ACL)
-#   Overtraining        ≈ 40% (overuse / excessive load outcomes)
+#   ACL injuries         ≈ 20% of all injuries
+#   Soft tissue injuries ≈ 40% (muscle strains + ligament sprains, excl. ACL)
+#   Overtraining         ≈ 40% (overuse / excessive load outcomes)
 #
 BASE_ACL_P = BASE_INJURY_RATE * 0.20  # 0.01316
 BASE_ST_P  = BASE_INJURY_RATE * 0.40  # 0.02632
@@ -247,28 +269,31 @@ df = pd.DataFrame({
 df.to_csv(OUTPUT_PATH, index=False)
 
 # ── 6. Summary report ─────────────────────────────────────────────────────────
-n = len(df)
-acl_rate = df["acl_injury"].mean() * 100
-st_rate  = df["soft_tissue_injury"].mean() * 100
-ot_rate  = df["overtraining"].mean() * 100
-any_rate = df[["acl_injury", "soft_tissue_injury", "overtraining"]].any(axis=1).mean() * 100
-target   = BASE_INJURY_RATE * 100
+TARGET_RATE = BASE_INJURY_RATE * 100
+acl_rate    = df["acl_injury"].mean() * 100
+st_rate     = df["soft_tissue_injury"].mean() * 100
+ot_rate     = df["overtraining"].mean() * 100
+any_rate    = df[["acl_injury", "soft_tissue_injury", "overtraining"]].any(axis=1).mean() * 100
 
 print("=" * 60)
 print("Output")
 print("=" * 60)
-print(f"  Rows written: {n:,}")
-print(f"  Path:         {OUTPUT_PATH}")
+print(f"  Rows:   {len(df):,}")
+print(f"  Path:   {OUTPUT_PATH.relative_to(BASE.parent)}")
+print(f"  Columns ({len(df.columns)}):")
+for col in df.columns:
+    dtype = str(df[col].dtype)
+    print(f"    {col:25s}  {dtype}")
 print()
 
 print("=" * 60)
-print("Injury rate summary")
+print("Injury rates")
 print("=" * 60)
-print(f"  Target base rate (JSON):          {target:.2f}%")
-print(f"  Achieved any-injury rate:         {any_rate:.2f}%")
-print(f"  ├── ACL injury rate:              {acl_rate:.2f}%")
-print(f"  ├── Soft tissue injury rate:      {st_rate:.2f}%")
-print(f"  └── Overtraining rate:            {ot_rate:.2f}%")
+print(f"  Target base rate (JSON):     {TARGET_RATE:.2f}%  (per 100 AE, split across 3 injury types)")
+print(f"  ACL injury rate:             {acl_rate:.2f}%  (target ≈ {TARGET_RATE * 0.20:.2f}%)")
+print(f"  Soft tissue injury rate:     {st_rate:.2f}%  (target ≈ {TARGET_RATE * 0.40:.2f}%)")
+print(f"  Overtraining rate:           {ot_rate:.2f}%  (target ≈ {TARGET_RATE * 0.40:.2f}%)")
+print(f"  Any-injury rate:             {any_rate:.2f}%")
 print()
 
 print("  ACL rate by cycle phase:")
@@ -303,4 +328,11 @@ for condition, label in [(True, "ACWR > 1.5"), (False, "ACWR ≤ 1.5")]:
     if mask.sum():
         r = df.loc[mask, ["acl_injury", "soft_tissue_injury", "overtraining"]].any(axis=1).mean() * 100
         print(f"    {label}: {r:.2f}%  (n={mask.sum()})")
+print()
+
+print("=" * 60)
+print("Distribution sources")
+print("=" * 60)
+for col, source in _sources.items():
+    print(f"  {col:25s}  ← {source}")
 print()
