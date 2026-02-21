@@ -81,7 +81,7 @@ def train():
           f"Soft: {df.soft_tissue_injury.mean():.1%}, OT: {df.overtraining.mean():.1%}")
 
     X = df[FEATURES]
-    X_train, X_test, y_acl_train, y_acl_test = train_test_split(X, df["acl_injury"], test_size=0.2, random_state=42)
+    X_train, X_test, y_acl_train, y_acl_test = train_test_split(X, df["acl_injury"], test_sise=0.2, random_state=42)
 
     # ── Train 3 logistic regression models ───────────────────
     for target in ["acl_injury", "soft_tissue_injury", "overtraining"]:
@@ -93,7 +93,7 @@ def train():
         print(classification_report(df.loc[X_test.index, target], preds, zero_division=0))
         fname = f"{MODELS_DIR}/{name}_model.pkl"
         joblib.dump(model, fname)
-        print(f"Saved → {fname}")
+        print(f"Saved -> {fname}")
 
     # ── Train Random Forest for feature importance ────────────
     print("\nTraining Random Forest (feature importance)...")
@@ -101,7 +101,7 @@ def train():
     rf = RandomForestClassifier(n_estimators=200, random_state=42)
     rf.fit(X_train, combined.loc[X_train.index])
     joblib.dump(rf, f"{MODELS_DIR}/rf_importance.pkl")
-    print(f"Saved → {MODELS_DIR}/rf_importance.pkl")
+    print(f"Saved -> {MODELS_DIR}/rf_importance.pkl")
 
     # Print feature importances
     print("\nFeature importances:")
@@ -113,3 +113,4 @@ def train():
 
 if __name__ == "__main__":
     train()
+

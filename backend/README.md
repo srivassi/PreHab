@@ -14,7 +14,7 @@ uvicorn main:app --reload   # Dev 2: run server
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /analyze/ | Core agent — returns full risk analysis |
+| POST | /analyse/ | Core agent — returns full risk analysis |
 | POST | /training/log | Log a training session |
 | GET  | /training/{athlete_id} | Get last 30 sessions |
 | POST | /cycle/log | Log cycle details |
@@ -43,7 +43,7 @@ backend/
 ├── requirements.txt
 ├── .env.example
 ├── routers/
-│   ├── analyze.py       # POST /analyze — core agent endpoint
+│   ├── analyse.py       # POST /analyse — core agent endpoint
 │   ├── training.py      # Training log endpoints
 │   ├── cycle.py         # Cycle phase endpoints
 │   ├── users.py         # User management
@@ -58,5 +58,6 @@ backend/
 │   ├── train.py         # Dev 1: run this to train models
 │   └── models/          # .pkl files go here
 └── tests/
-    └── test_analyze.py
+    └── test_analyse.py
 ```
+
