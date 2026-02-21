@@ -69,3 +69,4 @@ def _template_fallback(analysis: dict) -> str:
         f"{action_text}"
         f"Monitor soreness closely over the next 3 days and rest if anything worsens."
     )
+

@@ -28,11 +28,11 @@ def adjust_plan(analysis: dict) -> dict:
         if "reduce_plyometrics" in actions and session["type"] == "plyometric":
             session["volume"]    = round(session["volume"] * 0.5)
             session["intensity"] = round(session["intensity"] * 0.7, 2)
-            changes.append(f"{day.capitalize()}: plyometrics reduced by 50%")
+            changes.append(f"{day.capitalise()}: plyometrics reduced by 50%")
 
         if "reduce_sprint_intensity" in actions and session["type"] == "sprint":
             session["intensity"] = round(session["intensity"] * 0.75, 2)
-            changes.append(f"{day.capitalize()}: sprint intensity reduced")
+            changes.append(f"{day.capitalise()}: sprint intensity reduced")
 
         if "add_stability" in actions and session["type"] == "rest" and day == "thursday":
             session["type"]      = "stability"
@@ -42,7 +42,7 @@ def adjust_plan(analysis: dict) -> dict:
 
         if risk == "CRITICAL" and session["type"] == "match":
             session["intensity"] = round(session["intensity"] * 0.80, 2)
-            changes.append(f"{day.capitalize()}: match intensity reduced (critical risk)")
+            changes.append(f"{day.capitalise()}: match intensity reduced (critical risk)")
 
     return {
         "original_plan": BASE_WEEK,
@@ -50,3 +50,4 @@ def adjust_plan(analysis: dict) -> dict:
         "changes_made":  changes,
         "risk_level":    risk,
     }
+

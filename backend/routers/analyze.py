@@ -8,7 +8,7 @@ import uuid, json
 router = APIRouter()
 
 @router.post("/", response_model=AnalysisResponse)
-def analyze(data: AthleteInput, db: Session = Depends(get_db)):
+def analyse(data: AthleteInput, db: Session = Depends(get_db)):
     """
     Core agent endpoint.
     1. Score risk (risk_engine)
@@ -44,3 +44,4 @@ def analyze(data: AthleteInput, db: Session = Depends(get_db)):
     )
 
     return analysis
+

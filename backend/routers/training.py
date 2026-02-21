@@ -25,3 +25,4 @@ def get_training_logs(athlete_id: str, db: Session = Depends(get_db)):
         .all()
     )
     return logs
+

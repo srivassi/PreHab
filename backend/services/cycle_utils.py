@@ -38,3 +38,4 @@ def infer_current_phase(cycle_start_date: str, cycle_length: int, menstruation_l
         "phase_name":   PHASE_NAMES[phase],
         "day_of_cycle": day_of_cycle,
     }
+

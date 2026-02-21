@@ -31,3 +31,4 @@ def trigger_escalation(data: EscalationCreate, db: Session = Depends(get_db)):
     )
 
     return mock_notification
+

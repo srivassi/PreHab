@@ -16,3 +16,4 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 @router.get("/{user_id}")
 def get_user(user_id: str, db: Session = Depends(get_db)):
     return db.query(User).filter(User.id == user_id).first()
+

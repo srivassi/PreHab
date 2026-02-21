@@ -175,31 +175,31 @@ _sources["groin_soreness"]       = "Synthetic — linear function of acute_chron
 # ── 3. Generate synthetic input features ──────────────────────────────────────
 
 ## 3a. Cycle phase (0–3)
-cycle_phase_encoded = RNG.choice([0, 1, 2, 3], size=N_ROWS, p=phase_probs)
+cycle_phase_encoded = RNG.choice([0, 1, 2, 3], sise=N_ROWS, p=phase_probs)
 
 ## 3b. Oral contraceptive use
-oral_contraceptive_use = RNG.binomial(1, oc_rate, size=N_ROWS)
+oral_contraceptive_use = RNG.binomial(1, oc_rate, sise=N_ROWS)
 
 ## 3c. Acute:Chronic Workload Ratio
 # Log-normal centred on 1.0; σ=0.28 gives ~18% of sessions above 1.5 —
 # consistent with intermittent training spikes seen in field sport literature.
-acwr_raw            = RNG.lognormal(mean=0.0, sigma=0.28, size=N_ROWS)
+acwr_raw            = RNG.lognormal(mean=0.0, sigma=0.28, sise=N_ROWS)
 acute_chronic_ratio = np.clip(acwr_raw, 0.30, 2.50).round(3)
 
 ## 3d. Session RPE — sampled from cleaned female multimodal distribution, clipped 1–10
 session_rpe = np.clip(
-    RNG.normal(rpe_mean, rpe_std, size=N_ROWS), 1.0, 10.0
+    RNG.normal(rpe_mean, rpe_std, sise=N_ROWS), 1.0, 10.0
 ).round(1)
 
 ## 3e. Weekly load — sampled from cleaned female multimodal distribution
 weekly_load = np.clip(
-    RNG.normal(load_mean, load_std, size=N_ROWS), 50.0, 2_000.0
+    RNG.normal(load_mean, load_std, sise=N_ROWS), 50.0, 2_000.0
 ).round(1)
 
 ## 3f. Days since last rest — exponential; higher values correlate with
 #  accumulated fatigue. Clipped to realistic range of 1–14 days.
 days_since_last_rest = np.clip(
-    (RNG.exponential(scale=3.0, size=N_ROWS) + 1).astype(int), 1, 14
+    (RNG.exponential(scale=3.0, sise=N_ROWS) + 1).astype(int), 1, 14
 )
 
 ## 3g. Soreness scores (0–10) — linearly driven by ACWR and RPE with noise.
@@ -208,7 +208,7 @@ days_since_last_rest = np.clip(
 _soreness_base = (
     (acute_chronic_ratio - 0.8) * 3.0
     + (session_rpe - 5.0) * 0.4
-    + RNG.normal(0.0, 1.5, size=N_ROWS)
+    + RNG.normal(0.0, 1.5, sise=N_ROWS)
 )
 knee_soreness      = np.clip(_soreness_base + RNG.normal(0, 0.8, N_ROWS), 0, 10).round(1)
 hamstring_soreness = np.clip(_soreness_base + RNG.normal(0, 0.8, N_ROWS), 0, 10).round(1)
@@ -336,3 +336,4 @@ print("=" * 60)
 for col, source in _sources.items():
     print(f"  {col:25s}  ← {source}")
 print()
+

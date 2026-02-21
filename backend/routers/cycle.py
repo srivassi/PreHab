@@ -35,3 +35,4 @@ def get_current_phase(athlete_id: str, db: Session = Depends(get_db)):
         cycle.cycle_length_days,
         cycle.menstruation_length
     )
+

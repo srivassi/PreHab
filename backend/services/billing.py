@@ -35,3 +35,4 @@ def record_signal(event_name: str, athlete_id: str, risk_level: str, plan_adjust
 
     except Exception as e:
         print(f"[Paid.ai] Failed to record signal: {e}")
+

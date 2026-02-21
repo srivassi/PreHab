@@ -33,8 +33,8 @@ def _load_models():
     try:
         return {
             "acl":  joblib.load(f"{MODELS_DIR}/acl_model.pkl"),
-            "soft": joblib.load(f"{MODELS_DIR}/soft_model.pkl"),
-            "ot":   joblib.load(f"{MODELS_DIR}/ot_model.pkl"),
+            "soft": joblib.load(f"{MODELS_DIR}/soft_tissue_model.pkl"),
+            "ot":   joblib.load(f"{MODELS_DIR}/overot_model.pkl"),
             "rf":   joblib.load(f"{MODELS_DIR}/rf_importance.pkl"),
         }
     except FileNotFoundError:
@@ -177,3 +177,4 @@ def run(data: AthleteInput) -> dict:
         "recommended_actions":    _recommended_actions(risk, soreness_traj, data.cycle_phase),
         "injury_window_forecast": forecast,
     }
+
