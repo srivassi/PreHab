@@ -1,5 +1,5 @@
-# Use Python 3.13 slim image
-FROM python:3.13-slim
+# Use Python 3.11 slim image — required for scikit-learn==1.5.2 compatibility
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
