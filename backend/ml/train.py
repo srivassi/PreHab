@@ -1,16 +1,15 @@
-"""
-Dev 1's training script.
-Run this once to train and save all models:
-    python ml/train.py
-"""
 import pandas as pd
 import numpy as np
 import joblib
 import os
+import sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+
+assert sklearn.__version__ == "1.5.2", \
+    f"Wrong sklearn version: {sklearn.__version__}. Run: pip install scikit-learn==1.5.2"
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 DATA_DIR   = os.path.join(os.path.dirname(__file__), "data")
@@ -81,7 +80,7 @@ def train():
           f"Soft: {df.soft_tissue_injury.mean():.1%}, OT: {df.overtraining.mean():.1%}")
 
     X = df[FEATURES]
-    X_train, X_test, y_acl_train, y_acl_test = train_test_split(X, df["acl_injury"], test_sise=0.2, random_state=42)
+    X_train, X_test, y_acl_train, y_acl_test = train_test_split(X, df["acl_injury"], test_size=0.2, random_state=42)
 
     # ── Train 3 logistic regression models ───────────────────
     for target in ["acl_injury", "soft_tissue_injury", "overtraining"]:
