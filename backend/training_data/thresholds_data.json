@@ -1,0 +1,141 @@
+{
+  "risk_factors": [
+    {
+      "factor_name": "Menstrual Cycle Phase: Ovulatory",
+      "description": "Increased observed frequency of acute, non-contact ACL injuries during the ovulatory phase (days 10-14) of the menstrual cycle.",
+      "statistical_multiplier": {
+        "type": "RR (approximate)",
+        "value": 1.61,
+        "condition": "Derived from observed injury frequency (29%) vs expected frequency (18%) during the ovulatory phase based on cycle duration (P = 0.03)"
+      },
+      "citation": {
+        "authors": "Wojtys EM, Huston LJ, Lindenfeld TN, et al.",
+        "title": "Association Between the Menstrual Cycle and Anterior Cruciate Ligament Injuries in Female Athletes",
+        "journal": "N/A in text",
+        "year": 1998,
+        "url": "N/A in text"
+      },
+      "self_reportable": true,
+      "self_report_method": "Athlete logging date of last menstrual period (LMP) and average cycle length; ideally noting first day feminine protection is required @73 @74 @176."
+    },
+    {
+      "factor_name": "Hormonal Contraceptive (OC) Use",
+      "description": "Reduced risk of ACL injury among female athletes using oral contraceptives compared to non-users.",
+      "statistical_multiplier": {
+        "type": "RR",
+        "value": 0.82,
+        "condition": "ACL injury risk among OC users (95% CI, 0.75–0.90)"
+      },
+      "citation": {
+        "authors": "Herzberg SD, Motu’apuaka ML, Lambert W, et al.",
+        "title": "The Effect of Menstrual Cycle and Contraceptives on ACL Injuries and Laxity: A Systematic Review and Meta-analysis",
+        "journal": "Orthopaedic Journal of Sports Medicine",
+        "year": 2017,
+        "url": "N/A in text"
+      },
+      "self_reportable": true,
+      "self_report_method": "Simple yes/no question about current oral contraceptive use @147 @148."
+    },
+    {
+      "factor_name": "Hormonal Contraceptive (OC) Use for ACL Surgery",
+      "description": "Reduced odds of ACL injuries requiring surgery among female athletes using oral contraceptives.",
+      "statistical_multiplier": {
+        "type": "OR",
+        "value": 0.82,
+        "condition": "Adjusted odds for ACL injuries requiring surgery among OC users (95% CI, 0.75–0.91)"
+      },
+      "citation": {
+        "authors": "Herzberg SD, Motu’apuaka ML, Lambert W, et al.",
+        "title": "The Effect of Menstrual Cycle and Contraceptives on ACL Injuries and Laxity: A Systematic Review and Meta-analysis",
+        "journal": "Orthopaedic Journal of Sports Medicine",
+        "year": 2017,
+        "url": "N/A in text"
+      },
+      "self_reportable": true,
+      "self_report_method": "Simple yes/no question about current oral contraceptive use @147 @148."
+    },
+    {
+      "factor_name": "Acute:Chronic Workload Ratio (ACWR) > 1.5",
+      "description": "While generally associated with increased injury risk, an exact numerical RR, OR, or HR for ACWR > 1.5 in female athletes was not explicitly found in the provided literature. An ACWR of 2.0 is associated with approximately a 22% likelihood of subsequent injury @41.",
+      "statistical_multiplier": {
+        "type": "N/A",
+        "value": 0.0,
+        "condition": "Exact RR/OR/HR not provided for ACWR > 1.5 specifically for female athletes in the reviewed documents."
+      },
+      "citation": {
+        "authors": "Kim T, Park J-C, Park J-M, et al.; Wang C, Trejo Vargas J, Stokes T, et al.",
+        "title": "Optimal relative workload for managing low-injury risk in lower extremities of female field hockey players; Analyzing Activity and Injury: Lessons Learned from the Acute:Chronic Workload Ratio",
+        "journal": "Medicine; Sports Medicine",
+        "year": 2021,
+        "url": "N/A in text"
+      },
+      "self_reportable": false,
+      "self_report_method": "ACWR is a computed metric. Inputs are self-reported training duration, intensity, and RPE @227 @229."
+    },
+    {
+      "factor_name": "Previous Injury",
+      "description": "History of prior knee or lower-limb musculoskeletal injury.",
+      "statistical_multiplier": {
+        "type": "N/A",
+        "value": 0.0,
+        "condition": "No exact numerical multiplier (RR/OR/HR) provided in the reviewed documents."
+      },
+      "citation": {
+        "authors": "N/A",
+        "title": "N/A",
+        "journal": "N/A",
+        "year": 0,
+        "url": "N/A"
+      },
+      "self_reportable": true,
+      "self_report_method": "Questionnaire asking about prior knee or other musculoskeletal injuries @168."
+    },
+    {
+      "factor_name": "Sleep Duration < 7 hours",
+      "description": "Daily sleep duration less than 7 hours.",
+      "statistical_multiplier": {
+        "type": "N/A",
+        "value": 0.0,
+        "condition": "No exact numerical multiplier (RR/OR/HR) provided in the reviewed documents."
+      },
+      "citation": {
+        "authors": "N/A",
+        "title": "N/A",
+        "journal": "N/A",
+        "year": 0,
+        "url": "N/A"
+      },
+      "self_reportable": true,
+      "self_report_method": "Athlete logging daily sleep duration @196."
+    },
+    {
+      "factor_name": "Biomechanical Factors: High Dynamic Knee Valgus",
+      "description": "A dynamic biomechanical factor indicating excessive inward collapse of the knee during movement.",
+      "statistical_multiplier": {
+        "type": "N/A",
+        "value": 0.0,
+        "condition": "No exact numerical multiplier (RR/OR/HR) provided for high dynamic knee valgus and injury risk in the reviewed documents."
+      },
+      "citation": {
+        "authors": "N/A",
+        "title": "N/A",
+        "journal": "N/A",
+        "year": 0,
+        "url": "N/A"
+      },
+      "self_reportable": false,
+      "self_report_method": "Requires objective laboratory assessment (e.g., motion capture) and is not directly self-reportable."
+    }
+  ],
+  "base_injury_rate": {
+    "value": 6.58,
+    "unit": "per 100 athlete exposures",
+    "citation": {
+      "authors": "Kim T, Park J-C, Park J-M, et al.",
+      "title": "Optimal relative workload for managing low-injury risk in lower extremities of female field hockey players",
+      "journal": "Medicine",
+      "year": 2021,
+      "url": "N/A in text"
+    }
+  }
+}
