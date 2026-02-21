@@ -1,21 +1,19 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 from schemas import AthleteInput, AnalysisResponse
-from services import risk_engine, planner, explainer, billing
-from db import get_db, RiskAnalysis
-import uuid, json
+from services import risk_engine, explainer, billing
+
 
 router = APIRouter()
 
 @router.post("/", response_model=AnalysisResponse)
-def analyse(data: AthleteInput, db: Session = Depends(get_db)):
+def analyse(data: AthleteInput):
     """
     Core agent endpoint.
     1. Score risk (risk_engine)
     2. Detect trends (risk_engine)
     3. Generate explanation (explainer -> Crusoe)
     4. Log to Paid.ai (billing)
-    5. Return full analysis blob
+    5. Return full analysis blob — persistence handled by Supabase edge function
     """
 
     # ── Step 1+2: Run the full risk analysis ──────────────────
@@ -25,17 +23,7 @@ def analyse(data: AthleteInput, db: Session = Depends(get_db)):
     explanation = explainer.generate(analysis)
     analysis["explanation"] = explanation
 
-    # ── Step 4: Persist to DB ─────────────────────────────────
-    record = RiskAnalysis(
-        id=str(uuid.uuid4()),
-        athlete_id=data.athlete_id,
-        analysis=analysis,
-        explanation=explanation
-    )
-    db.add(record)
-    db.commit()
-
-    # ── Step 5: Log signal to Paid.ai ─────────────────────────
+    # ── Step 4: Log signal to Paid.ai ─────────────────────────
     billing.record_signal(
         event_name="risk_assessment_completed",
         athlete_id=data.athlete_id,
@@ -44,4 +32,3 @@ def analyse(data: AthleteInput, db: Session = Depends(get_db)):
     )
 
     return analysis
-
