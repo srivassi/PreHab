@@ -63,45 +63,82 @@ def get_activity_data(
 
 @router.get("/cycle")
 def get_cycle_data(athlete_id: str):
-    """Simulate menstrual cycle tracking data"""
-    cycle_df = pd.read_csv(f"{DATA_DIR}/cycle_clean.csv")
-    flow_df = pd.read_csv(f"{DATA_DIR}/cycle_flow_clean.csv")
-    mood_df = pd.read_csv(f"{DATA_DIR}/cycle_mood_clean.csv")
-    
+    """Menstrual cycle tracking data with current phase calculation"""
+    df = pd.read_csv(f"{DATA_DIR}/cycle_clean.csv")
+    df["period_start"] = pd.to_datetime(df["period_start"])
+    df["period_end"] = pd.to_datetime(df["period_end"])
+    df["ovulation_date"] = pd.to_datetime(df["ovulation_date"])
+    df["fertile_start"] = pd.to_datetime(df["fertile_start"])
+    df["fertile_end"] = pd.to_datetime(df["fertile_end"])
+
+    today = datetime.now().date()
+
+    # Find the current or most recent cycle
+    past_cycles = df[df["period_start"].dt.date <= today].sort_values("period_start", ascending=False)
+    current_cycle = past_cycles.iloc[0] if len(past_cycles) > 0 else None
+
+    # Compute current phase
+    phase = None
+    days_into_cycle = None
+    days_until_next_period = None
+    next_cycle = df[df["period_start"].dt.date > today].sort_values("period_start").iloc[0] if len(df[df["period_start"].dt.date > today]) > 0 else None
+
+    if current_cycle is not None:
+        period_start = current_cycle["period_start"].date()
+        period_end = current_cycle["period_end"].date()
+        fertile_start = current_cycle["fertile_start"].date()
+        fertile_end = current_cycle["fertile_end"].date()
+        ovulation_date = current_cycle["ovulation_date"].date()
+        days_into_cycle = (today - period_start).days
+
+        if period_start <= today <= period_end:
+            phase = "menstrual"
+        elif fertile_start <= today <= ovulation_date:
+            phase = "ovulation"
+        elif today > ovulation_date:
+            phase = "luteal"
+        else:
+            phase = "follicular"
+
+    if next_cycle is not None:
+        days_until_next_period = (next_cycle["period_start"].date() - today).days
+
+    # Serialize — convert Timestamps to strings for JSON
+    def serialize_cycle(row):
+        return {
+            "period_length_days": int(row["period_length_days"]),
+            "cycle_number": int(row["cycle_number"]),
+            "period_start": str(row["period_start"].date()),
+            "period_end": str(row["period_end"].date()),
+            "ovulation_date": str(row["ovulation_date"].date()),
+            "fertile_start": str(row["fertile_start"].date()),
+            "fertile_end": str(row["fertile_end"].date()),
+            "cycle_id": row["cycle_id"],
+        }
+
     return {
         "athlete_id": athlete_id,
         "data_type": "menstrual_cycle",
-        "cycle_predictions": cycle_df.to_dict(orient="records"),
-        "flow_logs": flow_df.head(30).to_dict(orient="records"),
-        "mood_logs": mood_df.head(30).to_dict(orient="records")
+        "today": str(today),
+        "current_phase": phase,
+        "days_into_cycle": days_into_cycle,
+        "days_until_next_period": days_until_next_period,
+        "current_cycle": serialize_cycle(current_cycle) if current_cycle is not None else None,
+        "next_cycle": serialize_cycle(next_cycle) if next_cycle is not None else None,
+        "all_cycles": [serialize_cycle(row) for _, row in df.sort_values("period_start").iterrows()],
+        "count": len(df),
     }
 
 @router.get("/latest")
 def get_latest_metrics(athlete_id: str):
-    """Get latest metrics for quick analysis - simulates real-time watch sync"""
-    
-    # Latest exercise session
-    exercise_df = pd.read_csv(f"{DATA_DIR}/exercise_clean.csv")
-    latest_exercise = exercise_df.iloc[0].to_dict() if len(exercise_df) > 0 else None
-    
-    # Latest activity
-    activity_df = pd.read_csv(f"{DATA_DIR}/activity_clean.csv")
-    latest_activity = activity_df.iloc[0].to_dict() if len(activity_df) > 0 else None
-    
-    # Recent heart rate
-    hr_df = pd.read_csv(f"{DATA_DIR}/heart_rate_clean.csv")
-    recent_hr = hr_df.head(10).to_dict(orient="records")
-    
-    # Current cycle phase (mock calculation)
-    cycle_df = pd.read_csv(f"{DATA_DIR}/cycle_clean.csv")
-    current_cycle = cycle_df.iloc[0].to_dict() if len(cycle_df) > 0 else None
-    
+    """Get latest cycle phase — only valid wearable data available"""
+    cycle_response = get_cycle_data(athlete_id)
     return {
         "athlete_id": athlete_id,
-        "device": "Samsung Galaxy Watch",
         "sync_time": datetime.now().isoformat(),
-        "latest_exercise": latest_exercise,
-        "latest_activity": latest_activity,
-        "recent_heart_rate": recent_hr,
-        "current_cycle": current_cycle
+        "current_phase": cycle_response["current_phase"],
+        "days_into_cycle": cycle_response["days_into_cycle"],
+        "days_until_next_period": cycle_response["days_until_next_period"],
+        "current_cycle": cycle_response["current_cycle"],
+        "next_cycle": cycle_response["next_cycle"],
     }
