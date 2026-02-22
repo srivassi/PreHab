@@ -1,6 +1,8 @@
 import os
+import json
 import traceback
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()  # Load .env BEFORE importing services
@@ -51,3 +53,9 @@ app.include_router(wearable.router,   prefix="/wearable",   tags=["wearable"])
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "prehab-api"}
+
+@app.get("/evidence", tags=["evidence"])
+def get_evidence():
+    """Return the evidence base and citations underpinning the risk model"""
+    path = Path(__file__).parent / "training_data" / "thresholds_data.json"
+    return json.loads(path.read_text())
